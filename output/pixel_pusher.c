@@ -31,6 +31,13 @@ static uint8_t * out_packet;
 // See output_pp_do_frame for why we need this
 static struct timespec packet_interval = { .tv_sec = 0, .tv_nsec = 500*1000};
 
+static void numToHex(uint8_t* outstr, int val){
+    const char str[] = "0123456789ABCDEF";
+    outstr[0] = str[val / 16];
+    outstr[1] = str[val % 16];
+    outstr[2] = '\0';
+}
+
 static int pp_find_pusher() {
     INFO("Initializing PixelPusher");
 
@@ -206,7 +213,7 @@ void output_pp_term() {
 int output_pp_do_frame() {
     seq_num++;
 
-    ((uint32_t *) out_packet)[0] = seq_num;
+    ((char *) out_packet)[0] = seq_num;
     // We'll use this to keep track of our location in the packet buffer
     // as we fill it.  The sequence number is 4 bytes so we start after that.
     size_t out_packet_idx = 4;
@@ -229,9 +236,11 @@ int output_pp_do_frame() {
 
                 SDL_Color color = device->base.pixels.colors[idx];
                 double alpha = color.a / 255.0;
-                out_packet[out_packet_idx++] = color.r * alpha;
-                out_packet[out_packet_idx++] = color.g * alpha;
-                out_packet[out_packet_idx++] = color.b * alpha;
+                numToHex(&out_packet[out_packet_idx++],color.r * alpha);
+                numToHex(&out_packet[out_packet_idx++],color.g * alpha);
+                numToHex(&out_packet[out_packet_idx++],color.b * alpha);
+                //out_packet[out_packet_idx++] = numToHex(color.g * alpha);
+                //out_packet[out_packet_idx++] = numToHex(color.b * alpha);
             }
         }
 
